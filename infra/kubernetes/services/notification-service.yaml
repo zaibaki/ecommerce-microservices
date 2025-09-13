@@ -1,0 +1,97 @@
+# infra/kubernetes/services/notification-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ecommerce
+  labels:
+    app: notification-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        version: v1
+    spec:
+      serviceAccountName: ecommerce-sa
+      containers:
+      - name: notification-service
+        image: ecommerceacr.azurecr.io/notification-service:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: MONGODB_ATLAS_URI
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: mongodb-uri
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: redis-hostname
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: redis-password
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: KAFKA_BROKERS
+        - name: MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: mail-username
+        - name: MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: mail-password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: ecommerce
+  labels:
+    app: notification-service
+spec:
+  ports:
+  - port: 8083
+    targetPort: 8083
+    name: http
+  selector:
+    app: notification-service
+
+---

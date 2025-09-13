@@ -1,0 +1,55 @@
+# infra/kubernetes/services/inventory-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: ecommerce
+  labels:
+    app: inventory-service
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: inventory-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+        version: v1
+    spec:
+      serviceAccountName: ecommerce-sa
+      containers:
+      - name: inventory-service
+        image: ecommerceacr.azurecr.io/inventory-service:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: POSTGRES_PORT
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: postgres-username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: application-secrets
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: "ecommerce_inventory"
+        - name: REDIS_HOST
+          valueFrom:
+            secretKey
