@@ -1,0 +1,29 @@
+server:
+  port: ${ANALYTICS_SERVICE_PORT:8084}
+
+spring:
+  application:
+    name: analytics-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ecommerce_analytics}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:password}
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    consumer:
+      group-id: analytics-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
